@@ -1,12 +1,8 @@
 """Load the best-performing delivery-time model and make a prediction.
-
-This is the Task 1 deliverable script; Task 2's FastAPI app imports
-`predict_delivery_time` directly to serve predictions over HTTP.
 """
 
 import math
 import os
-
 import joblib
 import pandas as pd
 
@@ -16,14 +12,8 @@ BUNDLE_PATH = os.path.join(os.path.dirname(__file__), "model_bundle.joblib")
 def load_bundle(path: str = BUNDLE_PATH) -> dict:
     return joblib.load(path)
 
-
+# Great-circle distance between two lat/long points, in kilometers.
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Great-circle distance between two lat/long points, in kilometers.
-
-    Same formula used during training -- callers pass raw coordinates, never
-    a pre-computed distance, since a real caller (app/dispatcher) only ever
-    knows locations, not the distance between them.
-    """
     r = 6371.0
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
@@ -43,11 +33,7 @@ def predict_delivery_time(
     type_of_vehicle: str,
     bundle: dict | None = None,
 ) -> float:
-    """Predict delivery time in minutes from raw courier/order/location inputs.
-
-    type_of_order: one of "Snack", "Drinks", "Buffet", "Meal"
-    type_of_vehicle: one of "motorcycle", "scooter", "electric_scooter", "bicycle"
-    """
+    # Predict delivery time in minutes 
     if bundle is None:
         bundle = load_bundle()
 
