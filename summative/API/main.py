@@ -1,10 +1,15 @@
 """FastAPI app for the delivery-time prediction service."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
 from prediction import load_bundle, predict_delivery_time
-from schemas import DeliveryPredictionRequest, DeliveryPredictionResponse
+from retrain import retrain_model
+from schemas import (
+    DeliveryPredictionRequest,
+    DeliveryPredictionResponse,
+    NewDeliveryRecord,
+    RetrainResponse,
+)
 
 app = FastAPI(
     title="Delivery Time Prediction API",
@@ -51,3 +56,21 @@ def predict(request: DeliveryPredictionRequest):
         bundle=model_bundle,
     )
     return DeliveryPredictionResponse(predicted_delivery_time_minutes=round(predicted_minutes, 2))
+
+
+@app.post("/retrain", response_model=RetrainResponse)
+def retrain(records: list[NewDeliveryRecord]):
+    if not records:
+        raise HTTPException(status_code=400, detail="Must submit at least one record")
+
+    global model_bundle
+    result = retrain_model([r.model_dump(mode="json") for r in records])
+    model_bundle = result["bundle"]  # swap in the freshly retrained model immediately
+
+    return RetrainResponse(
+        rows_added=result["rows_added"],
+        total_training_rows=result["total_training_rows"],
+        model_name=result["model_name"],
+        test_mse=round(result["test_mse"], 4),
+        test_r2=round(result["test_r2"], 4),
+    )

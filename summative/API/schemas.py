@@ -38,3 +38,19 @@ class DeliveryPredictionRequest(BaseModel):
 
 class DeliveryPredictionResponse(BaseModel):
     predicted_delivery_time_minutes: float
+
+
+class NewDeliveryRecord(DeliveryPredictionRequest):
+
+    actual_delivery_time_minutes: float = Field(
+        ..., ge=1.0, le=300.0,
+        description="The real, observed delivery time for this record (minutes)",
+    )
+
+
+class RetrainResponse(BaseModel):
+    rows_added: int
+    total_training_rows: int
+    model_name: str
+    test_mse: float
+    test_r2: float
