@@ -1,6 +1,7 @@
 """FastAPI app for the delivery-time prediction service."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from prediction import load_bundle, predict_delivery_time
 from schemas import DeliveryPredictionRequest, DeliveryPredictionResponse
@@ -11,7 +12,23 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Load once at startup, not on every request -- the model/scaler never change between requests
+# Listed explicitly for local dev/browser testing:
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False, 
+    allow_methods=["GET", "POST"],  
+    allow_headers=["Content-Type"], 
+)
+
+# Load once at startup, not on every request, the model/scaler never change between requests
 model_bundle = load_bundle()
 
 
