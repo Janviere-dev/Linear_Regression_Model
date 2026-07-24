@@ -1,27 +1,32 @@
-# Delivery Time Prediction — Linear Regression Summative
+# Delivery Time Prediction  Linear Regression Summative
 
 **Mission:** Empower local e-commerce and logistics platforms with intelligent, data-driven arrival estimates that optimize driver scheduling, lower operational overhead, and build long-term customer trust through transparency.
 
 **Problem:** Dispatchers and customers lack a reliable way to know how long a delivery will actually take. This project predicts delivery time from courier, order, and distance data so platforms can generate accurate ETAs and intervene on likely delays before they happen.
 
-**Dataset:** `deliverytime.csv`  45,593 raw rows of food deliveries across multiple Indian cities (Indore, Bangalore, Coimbatore, Chennai, and others), with courier age/rating, restaurant and drop-off GPS coordinates, order type, vehicle type, and the actual recorded delivery time. <!-- TODO: add the exact Kaggle/source URL here -->
-
+**Dataset:** `deliverytime.csv`  45,593 raw rows of food deliveries across multiple Indian cities (Indore, Bangalore, Coimbatore, Chennai, and others), with courier age/rating, restaurant and drop-off GPS coordinates, order type, vehicle type, and the actual recorded delivery time. https://www.kaggle.com/datasets/rajatkumar30/food-delivery-time
 ## Repository structure
 
 ```
 summative/
 ├── linear_regression/
-│   ├── multivariate.ipynb   # EDA, cleaning, feature engineering, model comparison
+│   ├── multivariate.ipynb        # EDA, cleaning, feature engineering, model comparison
 │   └── data/
-│       └── deliverytime.csv
+│       ├── deliverytime.csv          # raw source data
+│       └── cleaned_deliverytime.csv  # post-cleaning, pre-encoding -- base for retraining
 ├── API/
-│   ├── prediction.py        # loads the saved model, exposes predict_delivery_time()
-│   └── model_bundle.joblib  # saved best model + scaler + feature schema
-├── FlutterApp/          
+│   ├── main.py               # FastAPI app: /predict, /retrain, CORS
+│   ├── schemas.py             # Pydantic request/response schemas + Enums
+│   ├── prediction.py          # loads the saved model, exposes predict_delivery_time()
+│   ├── retrain.py             # retrains on cleaned data + new records, saves model
+│   ├── model_bundle.joblib    # saved best model + scaler + feature schema
+│   ├── requirements.txt       # for Render (generated via `uv export`)
+│   └── runtime.txt            # pins Python version for Render
+├── FlutterApp/
 └── pyproject.toml
 ```
 
-## Task 1 — Model (notebook: `summative/linear_regression/multivariate.ipynb`)
+## Model (notebook: `summative/linear_regression/multivariate.ipynb`)
 
 Cleaned 45,593 raw rows down to 41,953 after fixing sign-corrupted coordinates and
 dropping unrecoverable placeholder GPS values; engineered a `distance_km` feature
@@ -38,4 +43,37 @@ data:
 The best model (lowest test MSE) is saved to `summative/API/model_bundle.joblib`
 along with the fitted `StandardScaler` and the exact feature column schema, so
 predictions in Task 2 are preprocessed identically to training.
+
+## API
+
+**Live API:** https://delivery-time-prediction-api.onrender.com
+**Swagger UI (interactive docs, testable in-browser):** https://delivery-time-prediction-api.onrender.com/docs
+
+Built with FastAPI, hosted free on Render. Endpoints:
+
+- `POST /predict` takes courier age/rating, restaurant + delivery coordinates, order
+  type, and vehicle type; computes the Haversine distance internally and returns a
+  predicted delivery time in minutes. Every field has an enforced type and a realistic
+  range constraint (Pydantic `Field(ge=..., le=...)`); `type_of_order` and
+  `type_of_vehicle` are `Enum`s, so invalid values are rejected before the model ever
+  runs, with a structured `422` response listing every violation.
+- `POST /retrain` — accepts one or more new labeled records (the same fields as
+  `/predict`, plus the real observed `actual_delivery_time_minutes`). New records are
+  permanently appended to the cleaned training data, the model is refit on the full
+  updated dataset (same winning hyperparameters found in the notebook: Random Forest,
+  `max_depth=8`, `n_estimators=100`), and the running server's in-memory model is
+  swapped immediately -- no restart needed for the update to take effect.
+
+**CORS:** configured with an explicit origin list rather than a wildcard (`*`). CORS
+only restricts browser-based callers (it checks the `Origin` header) -- it never
+affects the native Flutter mobile app in Task 3, since mobile apps don't send one.
+Restricting origins therefore costs nothing in practice while avoiding a wildcard:
+`allow_credentials=False` (no cookies/auth tokens used), `allow_methods` limited to
+`GET`/`POST` (all this API exposes), `allow_headers` limited to `Content-Type`.
+
+**Known limitation:** Render's free tier has no persistent disk. `/retrain` works
+correctly on the live server, but data/model updates written since the last deploy
+are lost if the free instance restarts (which Render does automatically after
+inactivity). A production deployment would need a real database or persistent volume
+to make retraining durable across restarts.
 
