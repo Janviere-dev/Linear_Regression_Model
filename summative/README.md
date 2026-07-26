@@ -77,3 +77,44 @@ are lost if the free instance restarts (which Render does automatically after
 inactivity). A production deployment would need a real database or persistent volume
 to make retraining durable across restarts.
 
+## Flutter App
+
+A single-page mobile app (`summative/FlutterApp/`) that calls the live API above.
+8 input fields matching `DeliveryPredictionRequest` exactly (courier age, rating,
+restaurant/delivery coordinates, order type, vehicle type),a **Predict** button,
+and a persistent result/error display area.
+
+### Running it
+
+1. Install the [Flutter SDK](https://docs.flutter.dev/get-started/install) if you
+   don't already have it, and confirm it's set up correctly:
+   ```bash
+   flutter doctor
+   ```
+2. Get dependencies:
+   ```bash
+   cd summative/FlutterApp
+   flutter pub get
+   ```
+3. Connect a device:
+   - **Physical Android phone**: enable Developer Options (Settings → About Phone →
+     tap "Build Number" 7 times), then enable USB Debugging under Developer Options,
+     then connect via USB and accept the "Allow USB debugging?" prompt.
+   - **Android emulator**: start one from Android Studio, or `flutter emulators launch <id>`.
+4. Confirm your device is detected:
+   ```bash
+   flutter devices
+   ```
+5. Run the app:
+   ```bash
+   flutter run
+   ```
+
+No local backend setup is needed -- the app talks directly to the live Render API
+(`ApiService.baseUrl` in `lib/services/api_service.dart`), so it works as soon as
+it's installed on a device with internet access.
+
+## Video Demo
+
+**YouTube Video:** https://youtu.be/Z9tcbrS-7es
+
