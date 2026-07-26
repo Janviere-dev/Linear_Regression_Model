@@ -1,8 +1,8 @@
 # Delivery Time Prediction  Linear Regression Summative
 
-**Mission:** Empower local e-commerce and logistics platforms with intelligent, data-driven arrival estimates that optimize driver scheduling, lower operational overhead, and build long-term customer trust through transparency.
+**Mission:** Empower local logistics platforms with data-driven delivery-time estimates that optimize driver scheduling and build customer trust.
 
-**Problem:** Dispatchers and customers lack a reliable way to know how long a delivery will actually take. This project predicts delivery time from courier, order, and distance data so platforms can generate accurate ETAs and intervene on likely delays before they happen.
+**Problem:** Platforms can't reliably estimate delivery time; this project predicts it from courier, order, and distance data to enable accurate Estimated Time Arrivals(ETAs) and early delay intervention.
 
 
 **Dataset:** `deliverytime.csv`  45,593 raw rows of food deliveries across multiple Indian cities (Indore, Bangalore, Coimbatore, Chennai, and others), with courier age/rating, restaurant and drop-off GPS coordinates, order type, vehicle type, and the actual recorded delivery time. https://www.kaggle.com/datasets/rajatkumar30/food-delivery-time
