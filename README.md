@@ -4,7 +4,11 @@
 
 **Problem:** Dispatchers and customers lack a reliable way to know how long a delivery will actually take. This project predicts delivery time from courier, order, and distance data so platforms can generate accurate ETAs and intervene on likely delays before they happen.
 
+
 **Dataset:** `deliverytime.csv`  45,593 raw rows of food deliveries across multiple Indian cities (Indore, Bangalore, Coimbatore, Chennai, and others), with courier age/rating, restaurant and drop-off GPS coordinates, order type, vehicle type, and the actual recorded delivery time. https://www.kaggle.com/datasets/rajatkumar30/food-delivery-time
+
+This model's learned patterns are specific to India, but the *system* built around it isn't: the same cleaning approach, distance-based feature engineering, and model pipeline apply to any country's delivery data. The API's `/retrain` endpoint lets this exact deployed system adapt to real local data for example from African logistics platforms like Jumia, Vuba Vuba or Glovo without rebuilding anything, making it a practical starting point for markets, including across Africa, that currently struggle to estimate delivery time accurately.
+
 ## Repository structure
 
 ```
@@ -44,6 +48,27 @@ The best model (lowest test MSE) is saved to `summative/API/model_bundle.joblib`
 along with the fitted `StandardScaler` and the exact feature column schema, so
 predictions in API are preprocessed identically to training.
 
+### Running the notebook
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if you
+   don't already have it.
+2. From the repo root, install dependencies:
+   ```bash
+   cd linear_regression_model/summative
+   uv sync
+   ```
+   This creates a `.venv` here and installs everything in `pyproject.toml`,
+   including `ipykernel` (needed to run the notebook itself).
+3. Open `linear_regression/multivariate.ipynb`:
+   - **VSCode**: open the file, click the kernel picker (top-right corner), and
+     select the Python interpreter at `summative/.venv/bin/python`.
+   - **JupyterLab**: `uv run --with jupyterlab jupyter lab`, then open the
+     notebook from the browser tab that launches.
+4. Use **"Restart Kernel and Run All Cells"** for a clean run top to bottom.
+
+`data/deliverytime.csv` is already included in the repo, so no separate download
+is needed before running the notebook.
+
 ## API
 
 **Live API:** https://delivery-time-prediction-api.onrender.com
@@ -76,6 +101,27 @@ correctly on the live server, but data/model updates written since the last depl
 are lost if the free instance restarts (which Render does automatically after
 inactivity). A production deployment would need a real database or persistent volume
 to make retraining durable across restarts.
+
+### Running the API locally
+
+The steps above describe the live, deployed API -- no setup needed to use it. To run
+your own local copy instead (e.g. to test changes before deploying):
+
+```bash
+git clone <this-repo-url>
+cd linear_regression_model/summative/API
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Then open `http://127.0.0.1:8000/docs` for the same Swagger UI, running locally.
+`requirements.txt` is a plain-pip export of this project's dependencies (generated
+via `uv export`), so this works with just Python and `pip` -- `uv` isn't required
+to run it, only to develop it. `model_bundle.joblib` and `cleaned_deliverytime.csv`
+are already committed to the repo, so no extra setup or training step is needed
+before the API can serve predictions.
 
 ## Flutter App
 
