@@ -42,7 +42,7 @@ data:
 
 The best model (lowest test MSE) is saved to `summative/API/model_bundle.joblib`
 along with the fitted `StandardScaler` and the exact feature column schema, so
-predictions in Task 2 are preprocessed identically to training.
+predictions in API are preprocessed identically to training.
 
 ## API
 
@@ -51,22 +51,22 @@ predictions in Task 2 are preprocessed identically to training.
 
 Built with FastAPI, hosted free on Render. Endpoints:
 
-- `POST /predict` takes courier age/rating, restaurant + delivery coordinates, order
+- `POST /predict` takes courier age/rating, restaurant, delivery coordinates, order
   type, and vehicle type; computes the Haversine distance internally and returns a
   predicted delivery time in minutes. Every field has an enforced type and a realistic
   range constraint (Pydantic `Field(ge=..., le=...)`); `type_of_order` and
   `type_of_vehicle` are `Enum`s, so invalid values are rejected before the model ever
   runs, with a structured `422` response listing every violation.
-- `POST /retrain` — accepts one or more new labeled records (the same fields as
+- `POST /retrain` accepts one or more new labeled records (the same fields as
   `/predict`, plus the real observed `actual_delivery_time_minutes`). New records are
   permanently appended to the cleaned training data, the model is refit on the full
   updated dataset (same winning hyperparameters found in the notebook: Random Forest,
   `max_depth=8`, `n_estimators=100`), and the running server's in-memory model is
-  swapped immediately -- no restart needed for the update to take effect.
+  swapped immediately  no restart needed for the update to take effect.
 
 **CORS:** configured with an explicit origin list rather than a wildcard (`*`). CORS
-only restricts browser-based callers (it checks the `Origin` header) -- it never
-affects the native Flutter mobile app in Task 3, since mobile apps don't send one.
+only restricts browser-based callers (it checks the `Origin` header) it never
+affects the native Flutter mobile app, since mobile apps don't send one.
 Restricting origins therefore costs nothing in practice while avoiding a wildcard:
 `allow_credentials=False` (no cookies/auth tokens used), `allow_methods` limited to
 `GET`/`POST` (all this API exposes), `allow_headers` limited to `Content-Type`.
@@ -110,7 +110,7 @@ and a persistent result/error display area.
    flutter run
    ```
 
-No local backend setup is needed -- the app talks directly to the live Render API
+No local backend setup is needed the app talks directly to the live Render API
 (`ApiService.baseUrl` in `lib/services/api_service.dart`), so it works as soon as
 it's installed on a device with internet access.
 
